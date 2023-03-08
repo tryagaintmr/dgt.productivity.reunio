@@ -9,7 +9,7 @@ import { UrlHelper } from '../common/urlHelper';
 import * as $ from 'jquery';
 import { LogLevel } from '@pnp/logging';
 import { BehaviorSubject } from 'rxjs';
-import { environment } from 'src/environments/environment';
+import { environment } from '@/environments/environment';
 
 
 /**
@@ -128,8 +128,9 @@ export class ContextService {
       this.IsDsiAgent.next(isDsi);
     // this.context.currentUser.IsDsiAgent = this.context.currentUser.IsSiteAdmin;
     console.log('profile department', department);
-    if(this.context.currentUser)
-      console.log('is DSI? ', this.context.currentUser.IsDsiAgent);
+    if(this.context.currentUser) {
+        console.log('is DSI? ', this.context.currentUser.IsDsiAgent);
+      }
     });
     this.isUserSiteColAdmin().then((isAdmin) => {
       if(this.context.currentUser)

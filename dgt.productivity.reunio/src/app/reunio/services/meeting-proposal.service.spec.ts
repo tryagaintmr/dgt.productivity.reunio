@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Web } from '@pnp/sp';
+import { Meeting } from '../models/meeting';
 
 import { MeetingProposalService } from './meeting-proposal.service';
 
@@ -18,15 +19,15 @@ describe('MeetingProposalService', () => {
   });
 
   it('should throw an error if title is missing', async () => {
-      const meeting = {
-        Title: '',
-        Description: 'A test meeting proposal',
-        Creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
-        Invitees: [
-          { Title: 'Jane Doe', EMail: 'janedoe@example.com' },
-          { Title: 'Bob Smith', EMail: 'bobsmith@example.com' },
+      const meeting: Meeting = {
+        title: '',
+        description: 'A test meeting proposal',
+        creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
+        invitees: [
+          { Title: 'Jane Doe', Email: 'janedoe@example.com' },
+          { Title: 'Bob Smith', Email: 'bobsmith@example.com' },
         ],
-        Slots: [
+        slots: [
           { date: '2022-01-01', start: '08:00', end: '09:00', available: true, selected: true, invitees: [] },
         ],
       };
@@ -35,14 +36,14 @@ describe('MeetingProposalService', () => {
 
     it('should throw an error if title is too long', async () => {
       const meeting = {
-        Title: 'A'.repeat(256),
-        Description: 'A test meeting proposal',
-        Creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
-        Invitees: [
+        title: 'A'.repeat(256),
+        description: 'A test meeting proposal',
+        creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
+        invitees: [
           { Title: 'Jane Doe', EMail: 'janedoe@example.com' },
           { Title: 'Bob Smith', EMail: 'bobsmith@example.com' },
         ],
-        Slots: [
+        slots: [
           {
             date: '2022-01-01',
             start: '08:00',
@@ -58,11 +59,11 @@ describe('MeetingProposalService', () => {
 
     it('should throw an error if invitees is missing', async () => {
       const meeting = {
-        Title: 'Test Meeting',
-        Description: 'A test meeting proposal',
-        Creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
-        Invitees: [],
-        Slots: [
+        title: 'Test Meeting',
+        description: 'A test meeting proposal',
+        creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
+        invitees: [],
+        slots: [
           { date: '2022-01-01', start: '08:00', end: '09:00', available: true, selected: true, invitees: [] },
         ],
       };
@@ -71,41 +72,41 @@ describe('MeetingProposalService', () => {
 
     it('should throw an error if slots is missing', async () => {
       const meeting = {
-        Title: 'Test Meeting',
-        Description: 'A test meeting proposal',
-        Creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
-        Invitees: [
+        title: 'Test Meeting',
+        description: 'A test meeting proposal',
+        creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
+        invitees: [
           { Title: 'Jane Doe', EMail: 'janedoe@example.com' },
           { Title: 'Bob Smith', EMail: 'bobsmith@example.com' },
         ],
-        Slots: [],
+        slots: [],
       };
       await expectAsync(service.createMeetingProposal(meeting)).toBeRejectedWithError('Slots are missing');
     });
 
     it('should create a meeting proposal', async () => {
       const meeting = {
-        Title: 'Test Meeting',
-        Creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
-        Invitees : [
+        title: 'Test Meeting',
+        creator: { Title: 'John Doe', EMail: 'johndoe@example.com' },
+        invitees : [
           { Title: 'Jane Doe', EMail: 'janedoe@example.com' },
           { Title: 'Bob Smith', EMail: 'bobsmith@example.com' },
         ],
-        Slots: [
+        slots: [
           { date: '2022-01-01', start: '08:00', end: '09:00', available: true, selected: true, invitees: [] },
         ],
       };
       const result = await service.createMeetingProposal(meeting);
       expect(result).toBeDefined();
-      expect(result.Id).toBeDefined();
-      expect(result.Title).toBe(meeting.Title);
-      expect(result.Description).toBe(undefined);
-      expect(result.Creator).toBeDefined();
-      expect(result.Creator.Title).toBe(meeting.Creator.Title);
-      expect(result.Creator.EMail).toBe(meeting.Creator.EMail);
-      expect(result.Invitees).toBeDefined();
-      expect(result.Invitees.length).toBe(meeting.Invitees.length);
-      expect(result.Slots).toBeDefined();
-      expect(result.Slots.length).toBe(meeting.Slots.length);
+      expect(result.id).toBeDefined();
+      expect(result.title).toBe(meeting.title);
+      expect(result.description).toBe(undefined);
+      expect(result.creator).toBeDefined();
+      expect(result.creator.Title).toBe(meeting.creator.Title);
+      expect(result.creator.EMail).toBe(meeting.creator.EMail);
+      expect(result.invitees).toBeDefined();
+      expect(result.invitees.length).toBe(meeting.invitees.length);
+      expect(result.slots).toBeDefined();
+      expect(result.slots.length).toBe(meeting.slots.length);
     });
 });

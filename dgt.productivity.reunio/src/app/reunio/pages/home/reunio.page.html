@@ -1,0 +1,48 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>reunio</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div>
+    <h3>Meeting Proposals You Created</h3>
+    <div *ngFor="let meeting of meetingsCreated">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ meeting.title }}</ion-card-title>
+          <ion-card-subtitle>
+            {{ meeting.dateCreated | date: 'shortDate' }}
+          </ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <p>
+            {{ meeting.invitees.length }} invitee(s), {{ meeting.totalAnswers }} out of {{ meeting.invitees.length }} responded
+          </p>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <h3>Meeting Proposals You Are Invited To</h3>
+    <div *ngFor="let meeting of meetingsInvited">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ meeting.title }}</ion-card-title>
+          <ion-card-subtitle>
+            {{ meeting.dateCreated | date: 'shortDate' }}
+          </ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <p *ngIf="meeting.answered">
+            You have responded to this meeting proposal.
+          </p>
+          <p *ngIf="!meeting.answered">
+            You have not responded to this meeting proposal.
+          </p>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+
+
+</ion-content>

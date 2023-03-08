@@ -16,6 +16,8 @@ import { HttpMockRequestInterceptorService } from './shared/services/interceptor
 import { PageErrorComponent } from './shared/pages/page-error/page-error.component';
 import { PageNotFoundComponent } from './shared/pages/page-not-found/page-not-found.component';
 import { environment } from '@/environments/environment';
+import { MeetingProposalService } from './reunio/services/meeting-proposal.service';
+import { MeetingProposalMockService } from './reunio/mock/meeting-proposal-mock.service';
 
 
 export const isMock = environment.mock;
@@ -57,6 +59,13 @@ export const isMock = environment.mock;
     //   deps: [ContextService],
     //   multi: true
     // },
+    // Add both services to the providers array
+    { provide: MeetingProposalService, useClass: MeetingProposalService },
+    { provide: MeetingProposalMockService, useClass: MeetingProposalMockService },
+    // Add a configuration value to determine which service to use
+    { provide: 'useMockService', useValue: false },
+    // Add the UserService interface to the providers array
+    { provide: MeetingProposalService, useExisting: process.env['NODE_ENV'] === 'production' ? MeetingProposalService : MeetingProposalMockService }
   ],
   bootstrap: [AppComponent],
 })

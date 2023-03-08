@@ -1,16 +1,15 @@
+import { Invitee } from "./invitee";
+
 export interface Meeting {
-  Id?: number;
-  Title: string;
-  Description?: string;
-  Creator: {
-    Title: string;
-    EMail: string;
-  };
-  Invitees: {
-    Title: string;
-    EMail: string;
-  }[];
-  Slots: {
+  id?: number;
+  title: string;
+  description?: string;
+  dateCreated?: Date;
+  answered?:boolean;
+  totalAnswers?:number;
+  creator: Partial<ISPUser>;
+  invitees: Partial<Invitee[]>;
+  slots: {
     date: string;
     start: string;
     end: string;
@@ -18,10 +17,21 @@ export interface Meeting {
     selected: boolean;
     invitees: string[];
   }[];
-  Status?: string;
-  SelectedSlot?: {
+  status?: string;
+  selectedSlot?: {
     date: string;
     start: string;
     end: string;
   };
+  isCreator?: boolean;
+}
+
+export interface ISPUser {
+  ID: number;
+  Id: number;
+  EMail: string;
+  Email: string;
+  LoginName?: string;
+  Title: string;
+
 }

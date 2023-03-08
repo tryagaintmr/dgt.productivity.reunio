@@ -26,7 +26,10 @@
     "paths": {
       "@/*": ["src/*"],
       "@app/*": ["src/app/*"],
-      "@env/*":["src/environnements/*"]
+      "@env/*":["src/environnements/*"],
+      "*": [
+        "node_modules/*"
+      ]
     },
     "useDefineForClassFields": false
   },

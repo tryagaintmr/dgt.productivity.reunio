@@ -1,6 +1,8 @@
 export interface Invitee {
-  id: number;
-  title: string;
-  email: string;
-  answer: boolean[];
+  id?: number;
+  Id?: number;
+  Title: string;
+  Email?: string;
+  EMail?: string;
+  answer?: boolean[];
 }

@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
 import { ReunioPageRoutingModule } from './reunio-routing.module';
-import { ReunioPage } from './pages/reunio.page';
+import { ReunioPage } from './pages/home/reunio.page';
 
 
 @NgModule({

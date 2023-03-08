@@ -1,7 +1,6 @@
 import { Meeting } from './../models/meeting';
 import { Injectable } from '@angular/core';
 import { sp, Web } from '@pnp/sp';
-import { Slot } from '../models/slot';
 import * as ics from 'ics';
 import { Invitee } from '../models/invitee';
 
@@ -10,6 +9,7 @@ import { Invitee } from '../models/invitee';
 })
 export class MeetingProposalService {
   private web: Web;
+  currentUserEmail: string = '';
 
   constructor(web: Web) {
     if (!web) {
@@ -19,80 +19,96 @@ export class MeetingProposalService {
   }
 
   async createMeetingProposal(meeting: Meeting): Promise<Meeting> {
-    if (!meeting.Title) {
+    if (!meeting.title) {
       throw new Error('Title is missing');
-    } else if (meeting.Title.length > 255) {
+    } else if (meeting.title.length > 255) {
       throw new Error('Title is too long');
-    } else if (meeting.Invitees.length === 0) {
+    } else if (meeting.invitees.length === 0) {
       throw new Error('Invitees are missing');
-    } else if (meeting.Slots.length === 0) {
+    } else if (meeting.slots.length === 0) {
       throw new Error('Slots are missing');
     }
 
     const createdMeeting = await this.web.lists.getByTitle('MeetingProposals').items.add({
-      Title: meeting.Title,
-      Description: meeting.Description,
-      CreatorEmail: meeting.Creator.EMail,
-      InviteesEmail: meeting.Invitees.map(invitee => invitee.EMail).join(';#'),
-      Slots: JSON.stringify(meeting.Slots),
+      Title: meeting.title,
+      Description: meeting.description,
+      CreatorEmail: meeting.creator.EMail,
+      InviteesEmail: meeting.invitees.map(invitee => invitee!.Email).join(';#'),
+      Slots: JSON.stringify(meeting.slots),
     });
 
-    return { Id: createdMeeting.data.ID, ...meeting };
+    return { id: createdMeeting.data.ID, ...meeting };
   }
 
-  async getMeetingProposalById(id: number): Promise<Meeting> {
-    const result = await this.web.lists.getByTitle('MeetingProposals').items.getById(id).get();
-    const inviteesEmail = result.InviteesEmail ? result.InviteesEmail.split(';#') : [];
-    const slots = result.Slots ? JSON.parse(result.Slots) : [];
+  public async getMeetingProposalsInvitingUser(currentUserEmail: string): Promise<Meeting[]> {
+    try {
+      const currentUser = await sp.web.currentUser.get();
+      const userEmail = currentUser.Email;
+      const filter = `substringof('${userEmail}', Invitees)`;
 
-    return {
-      Id: result.ID,
-      Title: result.Title,
-      Description: result.Description,
-      Creator: {
-        Title: result.Author.Title,
-        EMail: result.CreatorEmail,
-      },
-      Invitees: inviteesEmail.map((email: any) => ({ Title: email.split('@')[0], EMail: email })),
-      Slots: slots.map((slot: Slot) => ({
-        date: slot.date,
-        start: slot.start,
-        end: slot.end,
-        available: slot.available,
-        selected: slot.selected,
-        invitees: slot.invitees,
-      })),
-      Status: result.Status,
-      SelectedSlot: result.SelectedSlot ? {
-        date: result.SelectedSlot.date,
-        start: result.SelectedSlot.start,
-        end: result.SelectedSlot.end,
-      } : undefined,
-    };
+      const items: any[] = await sp.web.lists.getByTitle('MeetingProposals').items.filter(filter).get();
+
+      const meetings = items.map((item: any) => {
+        const meeting: Meeting = {
+          id: item.ID,
+          title: item.Title,
+          description: item.Description,
+          creator: {
+            Title: item.Author.Title,
+            Email: item.Author.Email,
+          },
+          invitees: item.Invitees.map((invitee: any) => {
+            return {
+              title: invitee.Title,
+              email: invitee.EMail,
+            };
+          }),
+          slots: item.AvailableSlots.map((slot: any) => {
+            return {
+              date: slot.Date,
+              start: slot.Start,
+              end: slot.End,
+              available: slot.Available,
+              selected: slot.Selected,
+              invitees: slot.Invitees,
+            };
+          }),
+          status: item.Status,
+          selectedSlot: item.SelectedSlot,
+        };
+
+        return meeting;
+      });
+
+      return meetings;
+    } catch (error) {
+      console.error('Error getting meeting proposals inviting the user: ', error);
+      return [];
+    }
   }
 
   async updateMeetingProposal(meeting: Meeting): Promise<Meeting> {
-    if (!meeting.Title) {
+    if (!meeting.title) {
       throw new Error('Title is missing');
-    } else if (meeting.Title.length > 255) {
+    } else if (meeting.title.length > 255) {
       throw new Error('Title is too long');
-    } else if (meeting.Invitees.length === 0) {
+    } else if (meeting.invitees.length === 0) {
       throw new Error('Invitees are missing');
-    } else if (meeting.Slots.length === 0) {
+    } else if (meeting.slots.length === 0) {
       throw new Error('Slots are missing');
     }
 
-    await this.web.lists.getByTitle('MeetingProposals').items.getById(meeting.Id!).update({
-      Title: meeting.Title,
-      Description: meeting.Description,
-      CreatorEmail: meeting.Creator.EMail,
-      InviteesEmail: meeting.Invitees.map(invitee => invitee.EMail).join(';#'),
-      Slots: JSON.stringify(meeting.Slots),
-      Status: meeting.Status,
-      SelectedSlot: meeting.SelectedSlot ? {
-        date: meeting.SelectedSlot.date,
-        start: meeting.SelectedSlot.start,
-        end: meeting.SelectedSlot.end,
+    await this.web.lists.getByTitle('MeetingProposals').items.getById(meeting.id!).update({
+      Title: meeting.title,
+      Description: meeting.description,
+      CreatorEmail: meeting.creator.EMail,
+      InviteesEmail: meeting.invitees.map(invitee => invitee!.EMail).join(';#'),
+      Slots: JSON.stringify(meeting.slots),
+      Status: meeting.status,
+      SelectedSlot: meeting.selectedSlot ? {
+        date: meeting.selectedSlot.date,
+        start: meeting.selectedSlot.start,
+        end: meeting.selectedSlot.end,
       } : null,
     });
 
@@ -112,13 +128,13 @@ export class MeetingProposalService {
   }
 
   public async getMeetingProposalICS(meeting: Meeting): Promise<string> {
-    const attendees = meeting.Invitees.map((invitee: any) => {
+    const attendees = meeting.invitees.map((invitee: any) => {
       return { name: invitee.title, email: invitee.email };
     });
 
     let startDates: ics.DateArray = [0, 0, 0];
     let endDates: ics.DateArray = [0, 0, 0];
-    meeting.Slots.forEach((slot) => {
+    meeting.slots.forEach((slot) => {
       if (slot.selected) {
         const [year, month, day] = slot.date.split('-').map((x) => parseInt(x));
         const [hour, minute] = slot.start.split(':').map((x) => parseInt(x));
@@ -134,8 +150,8 @@ export class MeetingProposalService {
     const event: ics.EventAttributes = {
       start: startDates,
       end: endDates,
-      title: meeting.Title,
-      description: meeting.Description,
+      title: meeting.title,
+      description: meeting.description,
       location: '',
       url: '',
       categories: ['Meeting'],
@@ -151,12 +167,14 @@ export class MeetingProposalService {
       if(value)
         return value;
     }
+
+    return '';
   }
 
   public async sendMeetingProposalEmail(meeting: Meeting, icsFile: string): Promise<void> {
-    const subject = `Meeting Proposal: ${meeting.Title}`;
+    const subject = `Meeting Proposal: ${meeting.title}`;
     const emailProperties: any = {
-      To: [meeting.Creator.EMail],
+      To: [meeting.creator.EMail],
       Subject: subject,
       Body: `Please find attached the meeting invitation.`,
       Attachments: {
@@ -166,4 +184,82 @@ export class MeetingProposalService {
     };
     await sp.utility.sendEmail(emailProperties);
   }
+
+  async getCurrentUserEmail(): Promise<string> {
+    if (!this.currentUserEmail) {
+      const currentUser = await sp.web.currentUser.get();
+      this.currentUserEmail = currentUser.Email;
+    }
+    return this.currentUserEmail;
+  }
+
+  async getMeetingProposalsCreatedByUser(currentUserEmail: string): Promise<Meeting[]> {
+    const meetings = await sp.web.lists.getByTitle('MeetingProposals').items
+      .select('ID', 'Title', 'Description', 'Creator/Id', 'Creator/EMail', 'Slots', 'InviteesAnswers')
+      .expand('Creator', 'InviteesAnswers')
+      .filter(`Creator/EMail eq '${currentUserEmail}'`)
+      .get();
+
+    return meetings.map(meeting => {
+      const invitees: Invitee[] = meeting.InviteesAnswers.map((invitee: any) => {
+        return {
+          email: invitee.Email,
+          name: invitee.Name,
+          answer: invitee.Answer,
+          slots: invitee.Slots
+        };
+      });
+
+      return {
+        id: meeting.ID,
+        title: meeting.Title,
+        description: meeting.Description,
+        creator: {
+          id: meeting.Creator.ID,
+          email: meeting.Creator.Email,
+        },
+        invitees: invitees,
+        slots: meeting.Slots,
+        isCreator: true,
+      } as Meeting;
+    });
+  }
+
+  // async getMeetingProposalsInvitingUser(currentUserEmail: string): Promise<Meeting[]> {
+  //   const meetings = await sp.web.lists.getByTitle('MeetingProposals').items
+  //     .select('ID', 'Title', 'Description', 'Creator/Id', 'Creator/EMail', 'Invitees', 'Slots', 'InviteesAnswers')
+  //     .expand('Creator', 'Invitees', 'InviteesAnswers')
+  //     .filter(`Invitees/EMail eq '${currentUserEmail}'`)
+  //     .get();
+
+  //   return meetings.map(meeting => {
+  //     const invitees: Invitee[] = meeting.InviteesAnswers.map((invitee: any) => {
+  //       return {
+  //         email: invitee.Email,
+  //         name: invitee.Name,
+  //         answer: invitee.Answer,
+  //         slots: invitee.Slots
+  //       };
+  //     });
+
+  //     const answeredInvitees = invitees.filter(invitee => invitee.answer !== null);
+  //     const totalInvitees = meeting.Invitees.length;
+
+  //     return {
+  //       id: meeting.ID,
+  //       title: meeting.Title,
+  //       description: meeting.Description,
+  //       creator: {
+  //         id: meeting.Creator.Id,
+  //         email: meeting.Creator.EMail
+  //       },
+  //       invitees: invitees,
+  //       slots: meeting.Slots,
+  //       answeredInvitees: answeredInvitees.length,
+  //       totalInvitees: totalInvitees,
+  //       isCreator: false
+  //     } as Meeting;
+  //   });
+  // }
+
 }
